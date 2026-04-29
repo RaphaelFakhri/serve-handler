@@ -608,6 +608,12 @@ module.exports = async (request, response, config = {}, methods = {}) => {
 	if (path.extname(relativePath) !== '') {
 		try {
 			stats = await handlers.lstat(absolutePath);
+			// If the path looks like it has an extension but actually resolves to a
+			// directory (e.g. /docs/1.4 where path.extname returns '.4'), clear stats
+			// so findRelated can fall back to index.html or the .html sibling.
+			if (stats && stats.isDirectory()) {
+				stats = null;
+			}
 		} catch (err) {
 			if (err.code !== 'ENOENT' && err.code !== 'ENOTDIR') {
 				return internalError(absolutePath, response, acceptsJSON, current, handlers, config, err);
